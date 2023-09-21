@@ -64,8 +64,6 @@ noncomputable def esEtFunctorMap {𝒬 ℛ : Presheaf (Type _) X} (M : 𝒬 ⟶ 
     continuous_toFun := by
       { refine continuous_generateFrom ?_
         intro V hV
-        change ∃ (U : (Opens X)ᵒᵖ) (s : ℛ.obj U),
-          V = { z : Σ x, ℛ.stalk x | ∃ (m : z.1 ∈ U.unop), z.2 = ℛ.germ ⟨z.1, m⟩ s } at hV
         rcases hV with ⟨U, s, rfl⟩
         rw [isOpen_iff_mem_nhds]
         rintro ⟨p, g⟩ (⟨mp, hpg⟩ : ∃ _, _)
@@ -73,11 +71,11 @@ noncomputable def esEtFunctorMap {𝒬 ℛ : Presheaf (Type _) X} (M : 𝒬 ⟶ 
         rcases (𝒬.germ_exist p g) with ⟨U', ⟨hp, s', rfl⟩⟩
         let r := TopCat.Presheaf.restrictOpen s' (U.unop ⊓ U') (inf_le_right : U.unop ⊓ U' ≤ U')
         let r' := M.app (op (U.unop ⊓ U')) r
-        dsimp at mp hpg
         have h1 : germ ℛ (U := U.unop ⊓ U') ⟨p, ⟨mp, hp⟩⟩ r' = germ ℛ ⟨p, mp⟩ s
         . rw [←hpg]
           change _ = (stalkFunctor (Type _) p).map M (germ 𝒬 ⟨p, hp⟩ s')
-          rw [stalkFunctor_map_germ_apply'' (U := U') ⟨p, hp⟩]
+          change _ = (_ ≫ (stalkFunctor _ _).map M) _
+          rw [stalkFunctor_map_germ (U := U') ⟨p, _⟩]
           dsimp
           rw [show M.app (op <| U.unop ⊓ U') (s' |_ (U.unop ⊓ U')) =
             ℛ.map (homOfLE <| by restrict_tac).op (M.app (op U') s') by
@@ -95,18 +93,17 @@ noncomputable def esEtFunctorMap {𝒬 ℛ : Presheaf (Type _) X} (M : 𝒬 ⟶ 
           change ∃ _ , _; dsimp
           refine ⟨le2 (𝒬.fst_mem_of_mem_esEtMkBO _ hx), ?_⟩
           rw [𝒬.snd_eq_of_mem_esEtMkBO _ hx]
-          rw [stalkFunctor_map_germ_apply'' (U := W) ⟨x.1, _⟩]
+          change (_ ≫ (stalkFunctor _ _).map M) _ = _
+          rw [stalkFunctor_map_germ (U := W) ⟨x.1, _⟩]
           have h3 : (ℛ.map i2.op s) = M.app (op W) (𝒬.map i1.op r)
           . change _ = (𝒬.map i1.op ≫ M.app _) r
             rw [M.naturality, ←h2]
             rfl
+          simp at *
           erw [←h3]
-          change (ℛ.map _ ≫ germ ℛ _) s = _
-          rw [germ_res]
-        . rw [SetLike.mem_coe, mem_esEtMkBO_iff]
-          refine ⟨pW, ?_⟩
+          refine' germ_res_apply ℛ i2 ⟨x.fst, _⟩ s
+        . refine ⟨pW, ?_⟩
           rw [restrict_restrict (e₁ := by restrict_tac) (e₂ := by restrict_tac)]
-          dsimp [restrictOpen, restrict]
           change 𝒬.germ _ _ = _
           change _ = (𝒬.map (i1 ≫ homOfLE (inf_le_right : U.unop ⊓ U' ≤ U')).op ≫ 𝒬.germ ⟨p, pW⟩) s'
           rw [𝒬.germ_res] }
@@ -232,15 +229,8 @@ def esEtContSectionSheaf : TopCat.Sheaf (Type _) X where
     { change TopCat.Presheaf.IsSheaf _
       erw [TopCat.Presheaf.isSheaf_iff_isSheafUniqueGluing_types]
       intro I U sf IC
-      refine ⟨?_, ?_⟩
-      simp
-      refine ⟨?_, ?_⟩
-      refine ⟨?_, ?_⟩
-      intro x
-      have hx : ∃ (i : I), ↑x ∈ U i := by
-        { have hx' : ↑x ∈ iSup U := by
-            { exact SetLike.coe_mem x }
-          exact Iff.mp Opens.mem_iSup hx' }
-       }
+      refine' ⟨⟨⟨λ x ↦ by
+        simp only [unop_op, Opens.mem_iSup] at x
+        exact (sf x.2.choose).1 ⟨x.1, x.2.choose_spec⟩, sorry⟩, sorry⟩, sorry⟩ }
 
 end TopCat.Presheaf
